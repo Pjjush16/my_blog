@@ -1,60 +1,48 @@
 const fs = require('fs');
 const path = require('path');
 
-const CONTENT_DIR = path.join(process.cwd(), 'content');
-const INDEX_PATH = path.join(CONTENT_DIR, 'index.json');
-const EXCERPT_LEN = 160;
+const ROOT = path.join(__dirname, '..');
+const POSTS_DIR = path.join(ROOT, 'content', 'posts');
+const INDEX_FILE = path.join(ROOT, 'content', 'index.json');
 
-function excerpt(text) {
-  return String(text || '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, EXCERPT_LEN) + (String(text || '').length > EXCERPT_LEN ? '…' : '');
-}
-
-function main() {
-  if (!fs.existsSync(CONTENT_DIR)) {
-    console.error('content/ 目录不存在');
-    process.exit(1);
-  }
-
-  const files = fs.readdirSync(CONTENT_DIR)
-    .filter(f => f.endsWith('.json') && f !== 'index.json');
-
-  const posts = [];
-  for (const file of files) {
-    const full = path.join(CONTENT_DIR, file);
-    try {
-      const raw = fs.readFileSync(full, 'utf8');
-      const post = JSON.parse(raw);
-      if (!post.id || !post.title || !post.createdAt) {
-        console.warn(`跳过 ${file}：缺少 id/title/createdAt`);
-        continue;
-      }
-      posts.push({
-        id: String(post.id),
-        title: post.title,
-        excerpt: excerpt(post.content),
-        createdAt: post.createdAt,
-        updatedAt: post.updatedAt || post.createdAt,
-      });
-    } catch (e) {
-      console.warn(`跳过 ${file}：${e.message}`);
+function parseFrontmatter(raw) {
+  if (!raw.startsWith('---')) return {};
+  const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!m) return {};
+  const fm = {};
+  m[1].split(/\r?\n/).forEach(line => {
+    const i = line.indexOf(':');
+    if (i === -1) return;
+    const k = line.slice(0, i).trim();
+    let v = line.slice(i + 1).trim();
+    if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+      v = v.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, '\\');
     }
-  }
-
-  posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-  const next = JSON.stringify(posts, null, 2) + '\n';
-  const prev = fs.existsSync(INDEX_PATH) ? fs.readFileSync(INDEX_PATH, 'utf8') : '';
-
-  if (next === prev) {
-    console.log(`索引无变化（${posts.length} 篇）`);
-    return;
-  }
-
-  fs.writeFileSync(INDEX_PATH, next, 'utf8');
-  console.log(`已重建索引：${posts.length} 篇`);
+    fm[k] = v;
+  });
+  return fm;
 }
 
-main();
+if (!fs.existsSync(POSTS_DIR)) {
+  console.error('缺少目录：' + POSTS_DIR);
+  process.exit(1);
+}
+
+const files = fs.readdirSync(POSTS_DIR).filter(f => f.endsWith('.md'));
+const posts = files.map(f => {
+  const raw = fs.readFileSync(path.join(POSTS_DIR, f), 'utf8');
+  const fm = parseFrontmatter(raw);
+  const id = f.replace(/\.md$/, '');
+  return {
+    id,
+    title: fm.title || id,
+    excerpt: fm.excerpt || '',
+    createdAt: fm.createdAt || '1970-01-01T00:00:00.000Z',
+  };
+});
+
+posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+fs.mkdirSync(path.dirname(INDEX_FILE), { recursive: true });
+fs.writeFileSync(INDEX_FILE, JSON.stringify(posts, null, 2) + '\n');
+console.log('已生成 ' + posts.length + ' 篇文章的索引 → ' + path.relative(ROOT, INDEX_FILE));
