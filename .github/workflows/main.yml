@@ -1,45 +1,47 @@
-name: Build post index
+name: Rebuild Index
 
 on:
-  schedule:
-    - cron: '*/15 * * * *'
-  workflow_dispatch:
   push:
+    branches: [main]
     paths:
-      - 'content/**.json'
-      - '!content/index.json'
-      - 'scripts/build-index.js'
-      - '.github/workflows/build-index.yml'
+      - 'content/posts/**.md'
+  schedule:
+    # 每 30 分钟兜底重建一次（GitHub 的 cron 不保证准点，延迟几分钟属正常）
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: build-index
-  cancel-in-progress: true
+  group: rebuild-index
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # 定时触发时也确保拿到默认分支最新提交
+          ref: main
+          fetch-depth: 1
+
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - name: Generate index
+          node-version: 20
+
+      - name: Rebuild content/index.json
         run: node scripts/build-index.js
+
       - name: Commit if changed
         run: |
-          if [[ -z "$(git status --porcelain content/index.json)" ]]; then
-            echo "index.json unchanged, skip commit"
-            exit 0
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add content/index.json
-          git commit -m "chore: rebuild post index [skip ci]"
-          git push
-      - name: Purge jsDelivr cache
-        if: success()
-        run: |
-          curl -s "https://purge.jsdelivr.net/gh/${GITHUB_REPOSITORY}@main/content/index.json" || true
+          if git diff --staged --quiet; then
+            echo "索引无变化，跳过提交"
+          else
+            git commit -m "chore: rebuild index"
+            git push
+          fi
