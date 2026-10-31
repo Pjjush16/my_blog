@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>博客 · YAONET</title>
+<title>全部文章 · YAONET</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -39,12 +39,19 @@
   .nav-cta{padding:8px 18px;border-radius:999px;background:var(--accent);color:#fff !important;font-weight:600;font-size:.88rem;transition:opacity .2s}
   .nav-cta:hover{opacity:.85}
 
-  .page-head{padding:56px 0 32px}
+  .page-head{padding:56px 0 24px}
   .page-head .eyebrow{display:inline-block;font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:6px 14px;border-radius:999px;margin-bottom:18px}
   .page-head h1{font-size:clamp(2rem,4vw,2.8rem);font-weight:800;letter-spacing:-.04em;line-height:1.15}
   .page-head p{margin-top:10px;color:var(--text-2);font-size:1rem;max-width:560px}
 
-  .post-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;padding-bottom:64px}
+  /* 搜索工具栏 */
+  .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:24px;flex-wrap:wrap}
+  .search-input{flex:1;min-width:220px;padding:12px 18px;border:1px solid var(--border);border-radius:999px;background:var(--surface);font-family:var(--font);font-size:.92rem;color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s}
+  .search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .search-input::placeholder{color:var(--text-3)}
+  .count-label{font-size:.85rem;color:var(--text-2);white-space:nowrap}
+
+  .post-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;padding-bottom:24px}
   .post-card{display:block;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;transition:transform .2s,box-shadow .2s,border-color .2s;box-shadow:var(--shadow-sm)}
   .post-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:color-mix(in srgb,var(--accent) 30%,var(--border))}
   .post-card h3{font-size:1.1rem;font-weight:700;letter-spacing:-.02em;line-height:1.4;margin-bottom:8px}
@@ -53,6 +60,19 @@
   .state{padding:48px 0;text-align:center;color:var(--text-3);font-size:.9rem;grid-column:1/-1}
   .state.error{color:#c0392b}
 
+  .pagination{display:flex;justify-content:center;align-items:center;gap:16px;padding:16px 0 72px;flex-wrap:wrap}
+  .pagination:empty{display:none}
+  .page-info{font-size:.85rem;color:var(--text-2)}
+  .pagination .btn{padding:8px 20px}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:999px;font-size:.92rem;font-weight:600;font-family:var(--font);transition:transform .15s,box-shadow .15s,background .2s;cursor:pointer;border:none}
+  .btn:active{transform:scale(.97)}
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:var(--shadow-sm)}
+  .btn-primary:hover{box-shadow:var(--shadow-md)}
+  .btn-ghost{background:transparent;color:var(--text-2);border:1px solid var(--border)}
+  .btn-ghost:hover{background:var(--surface);color:var(--text)}
+
+  /* 文章详情 */
   .post-view{padding:40px 0 72px;max-width:760px;margin:0 auto}
   .back{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;color:var(--text-3);margin-bottom:24px;transition:color .2s}
   .back:hover{color:var(--accent)}
@@ -85,7 +105,9 @@
   @media (max-width:900px){.post-grid{grid-template-columns:1fr}}
   @media (max-width:640px){
     .nav-links{display:none}
-    .page-head{padding:40px 0 24px}
+    .page-head{padding:40px 0 20px}
+    .toolbar{flex-direction:column;align-items:stretch}
+    .count-label{text-align:center}
   }
 </style>
 </head>
@@ -105,24 +127,31 @@
 </header>
 
 <main class="container">
-  <section id="view-list">
+  <!-- 全部文章视图（默认） -->
+  <section id="view-all">
     <div class="page-head">
       <div class="eyebrow">YAONET · 博客</div>
       <h1>所有文章</h1>
       <p>技术、产品与日常观察。按时间倒序排列。</p>
     </div>
-    <div id="list" class="post-grid">
+    <div class="toolbar">
+      <input id="search-input" class="search-input" type="search" placeholder="搜索标题或摘要…" autocomplete="off" />
+      <span id="count-label" class="count-label">加载中…</span>
+    </div>
+    <div id="all-list" class="post-grid">
       <div class="state">加载中…</div>
     </div>
+    <div id="pagination" class="pagination"></div>
   </section>
 
+  <!-- 文章视图 -->
   <article id="view-post" class="post-view" hidden>
-    <a class="back" href="./" data-list>← 返回文章列表</a>
+    <a class="back" id="back-link" href="./">← 返回全部文章</a>
     <h1 id="post-title"></h1>
     <div id="post-meta" class="meta"></div>
     <div id="post-body" class="prose"></div>
     <div class="post-footer">
-      <a class="back" href="./" data-list>← 返回文章列表</a>
+      <a class="back" id="back-link-2" href="./">← 返回全部文章</a>
     </div>
   </article>
 </main>
@@ -141,19 +170,31 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/highlight.js@11/lib/common.min.js"></script>
 <script>
+  // ==================== 配置 ====================
   // 页面本身在 blog.yaonet.de5.net，相对路径即请求 blog 域名
   const CONTENT_BASE = './content';
   const POSTS_DIR    = 'posts';
+  const PAGE_SIZE    = 24;
 
-  const listEl  = document.getElementById('list');
-  const viewList = document.getElementById('view-list');
-  const viewPost = document.getElementById('view-post');
-  const titleEl  = document.getElementById('post-title');
-  const metaEl   = document.getElementById('post-meta');
-  const bodyEl   = document.getElementById('post-body');
+  // ==================== 元素 ====================
+  const viewAll   = document.getElementById('view-all');
+  const viewPost  = document.getElementById('view-post');
+  const allListEl = document.getElementById('all-list');
+  const countEl   = document.getElementById('count-label');
+  const pageEl    = document.getElementById('pagination');
+  const searchEl  = document.getElementById('search-input');
+  const titleEl   = document.getElementById('post-title');
+  const metaEl    = document.getElementById('post-meta');
+  const bodyEl    = document.getElementById('post-body');
 
-  let indexCache = null;
+  // ==================== 状态 ====================
+  let indexCache  = null;
+  let allPosts    = [];
+  let currentPage = 1;
+  let searchQuery = '';
+  let searchTimer = null;
 
+  // ==================== 工具 ====================
   function esc(s){
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
@@ -178,6 +219,13 @@
     });
     return { fm: fm, body: raw.slice(m[0].length) };
   }
+  function cardHTML(p){
+    return '<a class="post-card" href="?id=' + encodeURIComponent(p.id) + '" data-post="' + esc(p.id) + '">' +
+      '<h3>' + esc(p.title || '无标题') + '</h3>' +
+      '<div class="meta">' + fmt(p.createdAt) + '</div>' +
+      '<div class="excerpt">' + esc(p.excerpt || '') + '</div>' +
+    '</a>';
+  }
 
   async function getIndex(){
     if(indexCache) return indexCache;
@@ -188,35 +236,75 @@
     return indexCache;
   }
 
-  function renderList(posts){
-    if(!posts.length){
-      listEl.innerHTML = '<div class="state">还没有文章。</div>';
+  // ==================== 视图切换 ====================
+  function setView(name){
+    viewAll.hidden  = name !== 'all';
+    viewPost.hidden = name !== 'post';
+  }
+
+  // ==================== 全部文章 ====================
+  async function showAll(){
+    setView('all');
+    document.title = '全部文章 · YAONET';
+    try{
+      allPosts = await getIndex();
+      if(!searchEl.value) {
+        currentPage = 1;
+        searchQuery = '';
+      }
+      renderAllList();
+    }catch(e){
+      allListEl.innerHTML = '<div class="state error">加载失败，请检查 content/index.json 是否存在。</div>';
+      countEl.textContent = '';
+    }
+  }
+
+  function renderAllList(){
+    const q = searchQuery.trim().toLowerCase();
+    const filtered = q
+      ? allPosts.filter(function(p){
+          return (p.title || '').toLowerCase().indexOf(q) !== -1
+              || (p.excerpt || '').toLowerCase().indexOf(q) !== -1;
+        })
+      : allPosts;
+
+    const total = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    if(currentPage > totalPages) currentPage = totalPages;
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const items = filtered.slice(start, start + PAGE_SIZE);
+
+    countEl.textContent = q
+      ? '找到 ' + total + ' 篇匹配「' + searchQuery.trim() + '」'
+      : '共 ' + total + ' 篇文章';
+
+    allListEl.innerHTML = items.length
+      ? items.map(cardHTML).join('')
+      : '<div class="state">' + (q ? '没有匹配的文章。' : '还没有文章。') + '</div>';
+
+    renderPagination(totalPages);
+  }
+
+  function renderPagination(totalPages){
+    if(totalPages <= 1){
+      pageEl.innerHTML = '';
       return;
     }
-    listEl.innerHTML = posts.map(function(p){
-      return '<a class="post-card" href="?id=' + encodeURIComponent(p.id) + '" data-post="' + esc(p.id) + '">' +
-        '<h3>' + esc(p.title || '无标题') + '</h3>' +
-        '<div class="meta">' + fmt(p.createdAt) + '</div>' +
-        '<div class="excerpt">' + esc(p.excerpt || '') + '</div>' +
-      '</a>';
-    }).join('');
-  }
-
-  async function showList(){
-    viewList.hidden = false;
-    viewPost.hidden = true;
-    document.title = '博客 · YAONET';
-    try{
-      const posts = await getIndex();
-      renderList(posts);
-    }catch(e){
-      listEl.innerHTML = '<div class="state error">加载失败，请检查 content/index.json 是否存在。</div>';
+    let html = '';
+    if(currentPage > 1){
+      html += '<button class="btn btn-ghost" data-page="' + (currentPage - 1) + '">← 上一页</button>';
     }
+    html += '<span class="page-info">第 ' + currentPage + ' / ' + totalPages + ' 页</span>';
+    if(currentPage < totalPages){
+      html += '<button class="btn btn-ghost" data-page="' + (currentPage + 1) + '">下一页 →</button>';
+    }
+    pageEl.innerHTML = html;
   }
 
+  // ==================== 文章详情 ====================
   async function showPost(id){
-    viewList.hidden = true;
-    viewPost.hidden = false;
+    setView('post');
     titleEl.textContent = '加载中…';
     metaEl.textContent = '';
     bodyEl.innerHTML = '';
@@ -242,12 +330,15 @@
     }
   }
 
+  // ==================== 路由 ====================
   function route(){
-    const id = new URLSearchParams(location.search).get('id');
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
     if(id) showPost(id);
-    else showList();
+    else showAll();
   }
 
+  // ==================== 事件 ====================
   document.addEventListener('click', function(e){
     const postLink = e.target.closest('a[data-post]');
     if(postLink){
@@ -257,12 +348,30 @@
       showPost(id);
       return;
     }
-    const listLink = e.target.closest('a[data-list]');
-    if(listLink){
+    const backLink = e.target.closest('a.back');
+    if(backLink){
       e.preventDefault();
       history.pushState({}, '', './');
-      showList();
+      showAll();
+      return;
     }
+    const pageBtn = e.target.closest('button[data-page]');
+    if(pageBtn){
+      e.preventDefault();
+      currentPage = parseInt(pageBtn.getAttribute('data-page'), 10) || 1;
+      renderAllList();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+  });
+
+  searchEl.addEventListener('input', function(){
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function(){
+      searchQuery = searchEl.value;
+      currentPage = 1;
+      renderAllList();
+    }, 250);
   });
 
   window.addEventListener('popstate', route);
