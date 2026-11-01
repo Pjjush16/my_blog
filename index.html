@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<!-- 替换为本地 CSS -->
-<link rel="stylesheet" href="../lib/github.min.css" media="(prefers-color-scheme: light)">
-<link rel="stylesheet" href="../lib/github-dark.min.css" media="(prefers-color-scheme: dark)">
+<!-- 本地 CSS (当前页面在根目录，直接 ./lib/) -->
+<link rel="stylesheet" href="./lib/github.min.css" media="(prefers-color-scheme: light)">
+<link rel="stylesheet" href="./lib/github-dark.min.css" media="(prefers-color-scheme: dark)">
 <style>
   :root{
     --bg:#f7f6f3;--surface:#fff;--text:#1a1a1a;--text-2:#5f5f5f;--text-3:#8a8a8a;
@@ -168,12 +168,12 @@
   </div>
 </footer>
 
-<!-- 替换为本地 JS -->
-<script src="../lib/marked.min.js"></script>
-<script src="../lib/highlight.min.js"></script>
+<!-- 本地 JS 库 (与 index.html 同级) -->
+<script src="./lib/marked.min.js"></script>
+<script src="./lib/highlight.min.js"></script>
 <script>
   // ==================== 配置 ====================
-  // 页面本身在 blog.yaonet.de5.net，相对路径即请求 blog 域名
+  // 页面在根目录，直接读取同级 content 文件夹
   const CONTENT_BASE = './content';
   const POSTS_DIR    = 'posts';
   const PAGE_SIZE    = 24;
@@ -324,7 +324,7 @@
 
       // 检查库是否加载成功
       if (typeof marked === 'undefined') {
-        throw new Error('解析库 marked.js 未能加载');
+        throw new Error('解析库 marked.js 未能加载，请检查 ./lib/marked.min.js');
       }
 
       bodyEl.innerHTML = marked.parse(parsed.body);
