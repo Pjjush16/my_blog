@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<!-- 代码高亮主题（BootCDN） -->
-<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="(prefers-color-scheme: light)">
-<link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
+<!-- 本地 CSS (当前页面在根目录，直接 ./lib/) -->
+<link rel="stylesheet" href="./lib/github.min.css" media="(prefers-color-scheme: light)">
+<link rel="stylesheet" href="./lib/github-dark.min.css" media="(prefers-color-scheme: dark)">
 <style>
   :root{
     --bg:#f7f6f3;--surface:#fff;--text:#1a1a1a;--text-2:#5f5f5f;--text-3:#8a8a8a;
@@ -45,6 +45,7 @@
   .page-head h1{font-size:clamp(2rem,4vw,2.8rem);font-weight:800;letter-spacing:-.04em;line-height:1.15}
   .page-head p{margin-top:10px;color:var(--text-2);font-size:1rem;max-width:560px}
 
+  /* 搜索工具栏 */
   .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:24px;flex-wrap:wrap}
   .search-input{flex:1;min-width:220px;padding:12px 18px;border:1px solid var(--border);border-radius:999px;background:var(--surface);font-family:var(--font);font-size:.92rem;color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s}
   .search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
@@ -72,6 +73,7 @@
   .btn-ghost{background:transparent;color:var(--text-2);border:1px solid var(--border)}
   .btn-ghost:hover{background:var(--surface);color:var(--text)}
 
+  /* 文章详情 */
   .post-view{padding:40px 0 72px;max-width:760px;margin:0 auto}
   .back{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;color:var(--text-3);margin-bottom:24px;transition:color .2s}
   .back:hover{color:var(--accent)}
@@ -126,6 +128,7 @@
 </header>
 
 <main class="container">
+  <!-- 全部文章视图（默认） -->
   <section id="view-all">
     <div class="page-head">
       <div class="eyebrow">YAONET · 博客</div>
@@ -142,6 +145,7 @@
     <div id="pagination" class="pagination"></div>
   </section>
 
+  <!-- 文章视图 -->
   <article id="view-post" class="post-view" hidden>
     <a class="back" id="back-link" href="./">← 返回全部文章</a>
     <h1 id="post-title"></h1>
@@ -164,14 +168,17 @@
   </div>
 </footer>
 
-<!-- 用 BootCDN 的 UMD 版本，稳如老狗 -->
-<script src="https://cdn.bootcdn.net/ajax/libs/marked/4.0.12/marked.min.js"></script>
-<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<!-- 本地 JS 库 (与 index.html 同级) -->
+<script src="./lib/marked.min.js"></script>
+<script src="./lib/highlight.min.js"></script>
 <script>
+  // ==================== 配置 ====================
+  // 页面在根目录，直接读取同级 content 文件夹
   const CONTENT_BASE = './content';
   const POSTS_DIR    = 'posts';
   const PAGE_SIZE    = 24;
 
+  // ==================== 元素 ====================
   const viewAll   = document.getElementById('view-all');
   const viewPost  = document.getElementById('view-post');
   const allListEl = document.getElementById('all-list');
@@ -182,12 +189,14 @@
   const metaEl    = document.getElementById('post-meta');
   const bodyEl    = document.getElementById('post-body');
 
+  // ==================== 状态 ====================
   let indexCache  = null;
   let allPosts    = [];
   let currentPage = 1;
   let searchQuery = '';
   let searchTimer = null;
 
+  // ==================== 工具 ====================
   function esc(s){
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
@@ -229,11 +238,13 @@
     return indexCache;
   }
 
+  // ==================== 视图切换 ====================
   function setView(name){
     viewAll.hidden  = name !== 'all';
     viewPost.hidden = name !== 'post';
   }
 
+  // ==================== 全部文章 ====================
   async function showAll(){
     setView('all');
     document.title = '全部文章 · YAONET';
@@ -245,7 +256,7 @@
       }
       renderAllList();
     }catch(e){
-      allListEl.innerHTML = '<div class="state error">列表加载失败</div>';
+      allListEl.innerHTML = '<div class="state error">加载失败，请检查 content/index.json 是否存在。</div>';
       countEl.textContent = '';
     }
   }
@@ -293,6 +304,7 @@
     pageEl.innerHTML = html;
   }
 
+  // ==================== 文章详情 ====================
   async function showPost(id){
     setView('post');
     titleEl.textContent = '加载中…';
@@ -303,18 +315,17 @@
     try{
       const res = await fetch(CONTENT_BASE + '/' + POSTS_DIR + '/' + encodeURIComponent(id) + '.md', { cache: 'no-cache' });
       if(!res.ok) throw new Error('文件请求失败 HTTP ' + res.status);
-      
       const raw = await res.text();
-      
-      if(raw.length < 50 && !raw.includes('---')) {
-        throw new Error('获取内容过短，可能被防火墙拦截');
-      }
-
       const parsed = parseFrontmatter(raw);
 
       titleEl.textContent = parsed.fm.title || id;
       metaEl.textContent = fmt(parsed.fm.createdAt);
       document.title = (parsed.fm.title || id) + ' · YAONET';
+
+      // 检查库是否加载成功
+      if (typeof marked === 'undefined') {
+        throw new Error('解析库 marked.js 未能加载，请检查 ./lib/marked.min.js');
+      }
 
       bodyEl.innerHTML = marked.parse(parsed.body);
       
@@ -324,11 +335,12 @@
     }catch(e){
       titleEl.textContent = '加载失败';
       metaEl.textContent = '';
-      bodyEl.innerHTML = '<p style="color:red;">错误原因：' + e.message + '</p>';
+      bodyEl.innerHTML = '<p>错误原因：' + e.message + '</p>';
       document.title = '加载失败 · YAONET';
     }
   }
 
+  // ==================== 路由 ====================
   function route(){
     const params = new URLSearchParams(location.search);
     const id = params.get('id');
@@ -336,6 +348,7 @@
     else showAll();
   }
 
+  // ==================== 事件 ====================
   document.addEventListener('click', function(e){
     const postLink = e.target.closest('a[data-post]');
     if(postLink){
