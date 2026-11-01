@@ -61,6 +61,27 @@
   .state{padding:48px 0;text-align:center;color:var(--text-3);font-size:.9rem;grid-column:1/-1}
   .state.error{color:#c0392b}
 
+  /* ==================== 骨架屏（与首页一致） ==================== */
+  .sk-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-sm)}
+  .sk{
+    border-radius:6px;
+    background-color:var(--accent-soft);
+    background-image:linear-gradient(90deg,
+      transparent 0%,
+      color-mix(in srgb,var(--accent) 14%,var(--surface)) 50%,
+      transparent 100%);
+    background-size:200% 100%;
+    background-repeat:no-repeat;
+    animation:shimmer 1.5s linear infinite;
+  }
+  @keyframes shimmer{
+    0%{background-position:150% 0}
+    100%{background-position:-150% 0}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .sk{animation:none}
+  }
+
   .pagination{display:flex;justify-content:center;align-items:center;gap:16px;padding:16px 0 72px;flex-wrap:wrap}
   .pagination:empty{display:none}
   .page-info{font-size:.85rem;color:var(--text-2)}
@@ -139,8 +160,56 @@
       <input id="search-input" class="search-input" type="search" placeholder="搜索标题或摘要…" autocomplete="off" />
       <span id="count-label" class="count-label">加载中…</span>
     </div>
-    <div id="all-list" class="post-grid">
-      <div class="state">加载中…</div>
+    <!-- 骨架屏先渲染，数据后填充，请求不阻塞渲染 -->
+    <div id="all-list" class="post-grid" aria-live="polite" aria-busy="true">
+      <div class="sk-card" aria-hidden="true">
+        <div class="sk" style="height:15px;width:70%"></div>
+        <div class="sk" style="height:15px;width:44%;margin-top:8px"></div>
+        <div class="sk" style="height:10px;width:30%;margin-top:16px"></div>
+        <div class="sk" style="height:10px;width:100%;margin-top:16px"></div>
+        <div class="sk" style="height:10px;width:88%;margin-top:8px"></div>
+        <div class="sk" style="height:10px;width:60%;margin-top:8px"></div>
+      </div>
+      <div class="sk-card" aria-hidden="true">
+        <div class="sk" style="height:15px;width:70%"></div>
+        <div class="sk" style="height:15px;width:44%;margin-top:8px"></div>
+        <div class="sk" style="height:10px;width:30%;margin-top:16px"></div>
+        <div class="sk" style="height:10px;width:100%;margin-top:16px"></div>
+        <div class="sk" style="height:10px;width:88%;margin-top:8px"></div>
+        <div class="sk" style="height:10px;width:60%;margin-top:8px"></div>
+      </div>
+      <div class="sk-card" aria-hidden="true">
+        <div class="sk" style="height:15px;width:70%"></div>
+        <div class="sk" style="height:15px;width:44%;margin-top:8px"></div>
+        <div class="sk" style="height:10px;width:30%;margin-top:16px"></div>
+        <div class="sk" style="height:10px;width:100%;margin-top:16px"></div>
+        <div class="sk" style="height:10px;width:88%;margin-top:8px"></div>
+        <div class="sk" style="height:10px;width:60%;margin-top:8px"></div>
+      </div>
+      <div class="sk-card" aria-hidden="true">
+        <div class="sk" style="height:15px;width:70%"></div>
+        <div class="sk" style="height:15px;width:44%;margin-top:8px"></div>
+        <div class="sk" style="height:10px;width:30%;margin-top:16px"></div>
+        <div class="sk" style="height:10px;width:100%;margin-top:16px"></div>
+        <div class="sk" style="height:10px;width:88%;margin-top:8px"></div>
+        <div class="sk" style="height:10px;width:60%;margin-top:8px"></div>
+      </div>
+      <div class="sk-card" aria-hidden="true">
+        <div class="sk" style="height:15px;width:70%"></div>
+        <div class="sk" style="height:15px;width:44%;margin-top:8px"></div>
+        <div class="sk" style="height:10px;width:30%;margin-top:16px"></div>
+        <div class="sk" style="height:10px;width:100%;margin-top:16px"></div>
+        <div class="sk" style="height:10px;width:88%;margin-top:8px"></div>
+        <div class="sk" style="height:10px;width:60%;margin-top:8px"></div>
+      </div>
+      <div class="sk-card" aria-hidden="true">
+        <div class="sk" style="height:15px;width:70%"></div>
+        <div class="sk" style="height:15px;width:44%;margin-top:8px"></div>
+        <div class="sk" style="height:10px;width:30%;margin-top:16px"></div>
+        <div class="sk" style="height:10px;width:100%;margin-top:16px"></div>
+        <div class="sk" style="height:10px;width:88%;margin-top:8px"></div>
+        <div class="sk" style="height:10px;width:60%;margin-top:8px"></div>
+      </div>
     </div>
     <div id="pagination" class="pagination"></div>
   </section>
@@ -159,7 +228,7 @@
 
 <footer class="site-footer">
   <div class="container footer-inner">
-    <span>© 2025 YAONET · 用简洁的方式记录</span>
+    <span>© YAONET · 用简洁的方式记录</span>
     <div class="footer-links">
       <a href="https://yaonet.de5.net">首页</a>
       <a href="https://t.me/yao_cn" target="_blank" rel="noopener">Telegram</a>
@@ -177,6 +246,7 @@
   const CONTENT_BASE = './content';
   const POSTS_DIR    = 'posts';
   const PAGE_SIZE    = 24;
+  const SKELETON_COUNT = 6; // 骨架屏卡片数量
 
   // ==================== 元素 ====================
   const viewAll   = document.getElementById('view-all');
@@ -229,6 +299,22 @@
     '</a>';
   }
 
+  // 骨架屏：与首页一致的 shimmer 效果
+  function renderSkeleton(count){
+    var card = '<div class="sk-card" aria-hidden="true">' +
+      '<div class="sk" style="height:15px;width:70%"></div>' +
+      '<div class="sk" style="height:15px;width:44%;margin-top:8px"></div>' +
+      '<div class="sk" style="height:10px;width:30%;margin-top:16px"></div>' +
+      '<div class="sk" style="height:10px;width:100%;margin-top:16px"></div>' +
+      '<div class="sk" style="height:10px;width:88%;margin-top:8px"></div>' +
+      '<div class="sk" style="height:10px;width:60%;margin-top:8px"></div>' +
+    '</div>';
+    var html = '';
+    for (var i = 0; i < count; i++) html += card;
+    allListEl.innerHTML = html;
+    allListEl.setAttribute('aria-busy','true');
+  }
+
   async function getIndex(){
     if(indexCache) return indexCache;
     const res = await fetch(CONTENT_BASE + '/index.json', { cache: 'no-cache' });
@@ -248,6 +334,13 @@
   async function showAll(){
     setView('all');
     document.title = '全部文章 · YAONET';
+
+    // 首次加载（无缓存）时先展示骨架屏，避免空白
+    if(!indexCache){
+      renderSkeleton(SKELETON_COUNT);
+      countEl.textContent = '加载中…';
+    }
+
     try{
       allPosts = await getIndex();
       if(!searchEl.value) {
@@ -258,6 +351,8 @@
     }catch(e){
       allListEl.innerHTML = '<div class="state error">加载失败，请检查 content/index.json 是否存在。</div>';
       countEl.textContent = '';
+    }finally{
+      allListEl.setAttribute('aria-busy','false');
     }
   }
 
@@ -328,7 +423,7 @@
       }
 
       bodyEl.innerHTML = marked.parse(parsed.body);
-      
+
       if (typeof hljs !== 'undefined') {
         bodyEl.querySelectorAll('pre code').forEach(function(el){ hljs.highlightElement(el); });
       }
