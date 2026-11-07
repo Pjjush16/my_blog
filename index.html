@@ -61,7 +61,7 @@
   .state{padding:48px 0;text-align:center;color:var(--text-3);font-size:.9rem;grid-column:1/-1}
   .state.error{color:#c0392b}
 
-  /* ==================== 骨架屏（与首页一致） ==================== */
+  /* ==================== 骨架屏 ==================== */
   .sk-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-sm)}
   .sk{
     border-radius:6px;
@@ -220,6 +220,11 @@
     <h1 id="post-title"></h1>
     <div id="post-meta" class="meta"></div>
     <div id="post-body" class="prose"></div>
+    
+    <!-- 👇 新增：Giscus 评论区容器 👇 -->
+    <div id="giscus-container" style="margin-top: 48px;"></div>
+    <!-- 👆 --------------------- 👆 -->
+
     <div class="post-footer">
       <a class="back" id="back-link-2" href="./">← 返回全部文章</a>
     </div>
@@ -242,11 +247,10 @@
 <script src="./lib/highlight.min.js"></script>
 <script>
   // ==================== 配置 ====================
-  // 页面在根目录，直接读取同级 content 文件夹
   const CONTENT_BASE = './content';
   const POSTS_DIR    = 'posts';
   const PAGE_SIZE    = 24;
-  const SKELETON_COUNT = 6; // 骨架屏卡片数量
+  const SKELETON_COUNT = 6;
 
   // ==================== 元素 ====================
   const viewAll   = document.getElementById('view-all');
@@ -258,6 +262,7 @@
   const titleEl   = document.getElementById('post-title');
   const metaEl    = document.getElementById('post-meta');
   const bodyEl    = document.getElementById('post-body');
+  const giscusContainer = document.getElementById('giscus-container'); // 新增
 
   // ==================== 状态 ====================
   let indexCache  = null;
@@ -299,7 +304,6 @@
     '</a>';
   }
 
-  // 骨架屏：与首页一致的 shimmer 效果
   function renderSkeleton(count){
     var card = '<div class="sk-card" aria-hidden="true">' +
       '<div class="sk" style="height:15px;width:70%"></div>' +
@@ -335,7 +339,6 @@
     setView('all');
     document.title = '全部文章 · YAONET';
 
-    // 首次加载（无缓存）时先展示骨架屏，避免空白
     if(!indexCache){
       renderSkeleton(SKELETON_COUNT);
       countEl.textContent = '加载中…';
@@ -399,12 +402,46 @@
     pageEl.innerHTML = html;
   }
 
+  // ==================== 加载 Giscus 评论区 ====================
+  function loadGiscus(postId) {
+    // 1. 清空旧内容
+    giscusContainer.innerHTML = '';
+
+    // 2. 创建动态脚本
+    const script = document.createElement('script');
+    script.src = 'https://giscus.app/client.js';
+    
+    // 3. 填入你提供的专属信息
+    script.setAttribute('data-repo', 'Pjjush16/my_blog');
+    script.setAttribute('data-repo-id', 'R_kgDOVbsWng');
+    script.setAttribute('data-category', 'Announcements');
+    script.setAttribute('data-category-id', 'DIC_kwDOVbsWns4DKkod');
+    
+    // 4. 核心：改为 specific 映射，并绑定当前文章的 ID 作为唯一标识
+    script.setAttribute('data-mapping', 'specific');
+    script.setAttribute('data-term', 'post:' + postId); 
+    script.setAttribute('data-strict', '1'); 
+    
+    // 5. 其他样式配置
+    script.setAttribute('data-reactions-enabled', '1');
+    script.setAttribute('data-emit-metadata', '0');
+    script.setAttribute('data-input-position', 'top');
+    script.setAttribute('data-theme', 'preferred_color_scheme');
+    script.setAttribute('data-lang', 'zh-CN');
+    script.crossOrigin = 'anonymous';
+    script.async = true;
+
+    // 6. 注入网页
+    giscusContainer.appendChild(script);
+  }
+
   // ==================== 文章详情 ====================
   async function showPost(id){
     setView('post');
     titleEl.textContent = '加载中…';
     metaEl.textContent = '';
     bodyEl.innerHTML = '';
+    giscusContainer.innerHTML = ''; // 切换文章时先清空评论区
     window.scrollTo({ top: 0, behavior: 'instant' });
 
     try{
@@ -417,7 +454,6 @@
       metaEl.textContent = fmt(parsed.fm.createdAt);
       document.title = (parsed.fm.title || id) + ' · YAONET';
 
-      // 检查库是否加载成功
       if (typeof marked === 'undefined') {
         throw new Error('解析库 marked.js 未能加载，请检查 ./lib/marked.min.js');
       }
@@ -427,11 +463,16 @@
       if (typeof hljs !== 'undefined') {
         bodyEl.querySelectorAll('pre code').forEach(function(el){ hljs.highlightElement(el); });
       }
+
+      // 👇 文章渲染成功后，调用加载评论的函数
+      loadGiscus(id);
+
     }catch(e){
       titleEl.textContent = '加载失败';
       metaEl.textContent = '';
       bodyEl.innerHTML = '<p>错误原因：' + e.message + '</p>';
       document.title = '加载失败 · YAONET';
+      giscusContainer.innerHTML = ''; // 出错时不显示评论
     }
   }
 
