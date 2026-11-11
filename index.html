@@ -4,6 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>全部文章 · YAONET</title>
+
+<!-- ==================== Favicon：单文件多尺寸 ICO（16→256 全含） ==================== -->
+<!-- 老旧浏览器（IE6-11）只认 shortcut icon + .ico -->
+<link rel="shortcut icon" href="./favicon.ico">
+<!-- 现代浏览器 / 苹果设备 / Android：同样读取 .ico，按需自动选取内含尺寸 -->
+<link rel="icon" type="image/x-icon" href="./favicon.ico">
+
+<!-- 移动端地址栏主题色（跟随亮/暗配色） -->
+<meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f0f0f" media="(prefers-color-scheme: dark)">
+<!-- ==================== Favicon 结束 ==================== -->
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -220,8 +232,8 @@
     <h1 id="post-title"></h1>
     <div id="post-meta" class="meta"></div>
     <div id="post-body" class="prose"></div>
-    
-    <!-- 👇 新增：Giscus 评论区容器 👇 -->
+
+    <!-- 👇 Giscus 评论区容器 👇 -->
     <div id="giscus-container" style="margin-top: 48px;"></div>
     <!-- 👆 --------------------- 👆 -->
 
@@ -262,7 +274,7 @@
   const titleEl   = document.getElementById('post-title');
   const metaEl    = document.getElementById('post-meta');
   const bodyEl    = document.getElementById('post-body');
-  const giscusContainer = document.getElementById('giscus-container'); // 新增
+  const giscusContainer = document.getElementById('giscus-container');
 
   // ==================== 状态 ====================
   let indexCache  = null;
@@ -404,25 +416,16 @@
 
   // ==================== 加载 Giscus 评论区 ====================
   function loadGiscus(postId) {
-    // 1. 清空旧内容
     giscusContainer.innerHTML = '';
-
-    // 2. 创建动态脚本
     const script = document.createElement('script');
     script.src = 'https://giscus.app/client.js';
-    
-    // 3. 填入你提供的专属信息
     script.setAttribute('data-repo', 'Pjjush16/my_blog');
     script.setAttribute('data-repo-id', 'R_kgDOVbsWng');
     script.setAttribute('data-category', 'Announcements');
     script.setAttribute('data-category-id', 'DIC_kwDOVbsWns4DKkod');
-    
-    // 4. 核心：改为 specific 映射，并绑定当前文章的 ID 作为唯一标识
     script.setAttribute('data-mapping', 'specific');
-    script.setAttribute('data-term', 'post:' + postId); 
-    script.setAttribute('data-strict', '1'); 
-    
-    // 5. 其他样式配置
+    script.setAttribute('data-term', 'post:' + postId);
+    script.setAttribute('data-strict', '1');
     script.setAttribute('data-reactions-enabled', '1');
     script.setAttribute('data-emit-metadata', '0');
     script.setAttribute('data-input-position', 'top');
@@ -430,8 +433,6 @@
     script.setAttribute('data-lang', 'zh-CN');
     script.crossOrigin = 'anonymous';
     script.async = true;
-
-    // 6. 注入网页
     giscusContainer.appendChild(script);
   }
 
@@ -441,7 +442,7 @@
     titleEl.textContent = '加载中…';
     metaEl.textContent = '';
     bodyEl.innerHTML = '';
-    giscusContainer.innerHTML = ''; // 切换文章时先清空评论区
+    giscusContainer.innerHTML = '';
     window.scrollTo({ top: 0, behavior: 'instant' });
 
     try{
@@ -464,7 +465,6 @@
         bodyEl.querySelectorAll('pre code').forEach(function(el){ hljs.highlightElement(el); });
       }
 
-      // 👇 文章渲染成功后，调用加载评论的函数
       loadGiscus(id);
 
     }catch(e){
@@ -472,7 +472,7 @@
       metaEl.textContent = '';
       bodyEl.innerHTML = '<p>错误原因：' + e.message + '</p>';
       document.title = '加载失败 · YAONET';
-      giscusContainer.innerHTML = ''; // 出错时不显示评论
+      giscusContainer.innerHTML = '';
     }
   }
 
