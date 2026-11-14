@@ -5,6 +5,8 @@ excerpt: "我买了一个esp32,品鉴品鉴"
 ---
 我买了一块esp32,小智ai
 
+小小的一块
+
 接入deepseek,甚至在github认证之后还能白吃deepseek token
 
 我给他接入了wss mcp,也就配了一台阿里云linux电脑（这算是狗骑吕布不？）
